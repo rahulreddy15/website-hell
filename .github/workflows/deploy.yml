@@ -1,5 +1,5 @@
 name: GitHub Actions Test
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Deployment Action Triggered (${{ github.event_name }}) 🚀
 on: [push]
 jobs:
     explore-actions:
