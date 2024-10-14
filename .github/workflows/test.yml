@@ -19,23 +19,30 @@ jobs:
                 zola build
                 echo "Files in build directory"
                 ls ${{ github.workspace}}/public
-            - name: Debug SSH connection and copy files
+            - name: SSH Connection and File Transfer
               env:
                 SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
                 REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
                 REMOTE_USER: ${{ secrets.REMOTE_USER }}
+                REMOTE_PASS: ${{ secrets.REMOTE_PASS }}
               run: |
                 echo "$SSH_PRIVATE_KEY" > private_key.pem
                 chmod 600 private_key.pem
-                echo "Debugging SSH connection..."
-                ssh -i private_key.pem -o StrictHostKeyChecking=no -vvv $REMOTE_USER@$REMOTE_HOST "echo SSH connection successful"
-                if [ $? -eq 0 ]; then
-                  echo "SSH connection successful, proceeding with file operations"
-                  ssh -i private_key.pem -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
-                  scp -i private_key.pem -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                
+                echo "Attempting SSH connection with key..."
+                if ssh -i private_key.pem -o StrictHostKeyChecking=no -o BatchMode=yes $REMOTE_USER@$REMOTE_HOST "echo SSH key authentication successful"; then
+                  echo "SSH key authentication successful, proceeding with file operations"
+                  SSH_CMD="ssh -i private_key.pem -o StrictHostKeyChecking=no"
+                  SCP_CMD="scp -i private_key.pem"
                 else
-                  echo "SSH connection failed. Please check your SSH key and server configuration."
-                  exit 1
+                  echo "SSH key authentication failed, falling back to password authentication"
+                  sudo apt-get install -y sshpass
+                  SSH_CMD="sshpass -p $REMOTE_PASS ssh -o StrictHostKeyChecking=no"
+                  SCP_CMD="sshpass -p $REMOTE_PASS scp"
                 fi
+                
+                $SSH_CMD $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
+                $SCP_CMD -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                
                 rm -f private_key.pem
             - run: echo "🍏 This job's status is ${{ job.status }}."
