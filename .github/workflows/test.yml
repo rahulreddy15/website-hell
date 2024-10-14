@@ -17,8 +17,6 @@ jobs:
             - name: Build Zola Application
               run: |
                 zola build
-            - name: List files in the repository
-              run: |
-                ls ${{ github.workspace }}
+                echo "Files in build directory"
                 ls ${{ github.workspace}}/public
             - run: echo "🍏 This job's status is ${{ job.status }}."
