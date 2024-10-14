@@ -10,6 +10,6 @@ Bear is all you need to build a fantastic and optimized site or blog. It works p
 
 Bear makes it simple to publish content online and grow an audience while keeping pages tiny, fast, and **optimized for search engines.**
 
-Each page is ~5kb. And automatically pushed.
+Each page is ~5kb. And automatically pushed. Twice
 
 Learn more and contribute on [GitHub](https://github.com/HermanMartinus/bearblog).
