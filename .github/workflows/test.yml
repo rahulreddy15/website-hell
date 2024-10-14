@@ -19,7 +19,7 @@ jobs:
                 zola build
                 echo "Files in build directory"
                 ls ${{ github.workspace}}/public
-            - name: Clean remote directory and copy new files
+            - name: Debug SSH connection and copy files
               env:
                 SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
                 REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
@@ -27,7 +27,15 @@ jobs:
               run: |
                 echo "$SSH_PRIVATE_KEY" > private_key.pem
                 chmod 600 private_key.pem
-                ssh -i private_key.pem -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
-                scp -i private_key.pem -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                echo "Debugging SSH connection..."
+                ssh -i private_key.pem -o StrictHostKeyChecking=no -vvv $REMOTE_USER@$REMOTE_HOST "echo SSH connection successful"
+                if [ $? -eq 0 ]; then
+                  echo "SSH connection successful, proceeding with file operations"
+                  ssh -i private_key.pem -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
+                  scp -i private_key.pem -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                else
+                  echo "SSH connection failed. Please check your SSH key and server configuration."
+                  exit 1
+                fi
                 rm -f private_key.pem
             - run: echo "🍏 This job's status is ${{ job.status }}."
