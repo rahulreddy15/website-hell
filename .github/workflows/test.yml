@@ -11,11 +11,14 @@ jobs:
             - name: Check out repository code
               uses: actions/checkout@v4
             - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-            - name: List files in the repository
-              run: |
-                ls ${{ github.workspace }}
             - name: Install Zola
               run: |
                 sudo snap install zola --edge
-            - run: echo "💡 Zola installed successfully."
+            - name: Build Zola Application
+              run: |
+                zola build
+            - name: List files in the repository
+              run: |
+                ls ${{ github.workspace }}
+                ls ${{ github.workspace}}/public
             - run: echo "🍏 This job's status is ${{ job.status }}."
