@@ -1,5 +1,5 @@
 name: GitHub Actions Test
-run-name: Deployment Action Triggered (${{ github.event_name }}) 🚀
+run-name: Deployment Action Triggered (${{ github.run_id }}) 🚀
 on: [push]
 jobs:
     explore-actions:
@@ -34,4 +34,5 @@ jobs:
                 $SSH_CMD $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
                 $SCP_CMD -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
                 
-            - run: echo "🍏 This job's status is ${{ job.status }}."
+            - name: Job Status
+              run: echo "🍏 This job's status is ${{ job.status }}."
