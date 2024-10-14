@@ -19,4 +19,13 @@ jobs:
                 zola build
                 echo "Files in build directory"
                 ls ${{ github.workspace}}/public
+            - name: Rsync To Deploy New Build
+              uses: burnett01/rsync-deployments@7.0.1
+              with:
+                switches: -avzr --delete
+                path: public/
+                remote_path: /var/www/html/
+                remote_user: ${{ secrets.HOST_USERNAME }}
+                remote_host: ${{ secrets.HOST }}
+                remote_key: ${{ secrets.HOST_AUTH }}
             - run: echo "🍏 This job's status is ${{ job.status }}."
