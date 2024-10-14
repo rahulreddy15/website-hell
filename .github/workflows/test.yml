@@ -11,10 +11,6 @@ jobs:
             - name: Check out repository code
               uses: actions/checkout@v4
             - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-            - name: Update Libraries
-              run: |
-                sudo apt-get update -y
-                sudo apt-get install -y openssh-client
             - name: Install Zola
               run: |
                 sudo snap install zola --edge
@@ -23,13 +19,15 @@ jobs:
                 zola build
                 echo "Files in build directory"
                 ls ${{ github.workspace}}/public
-            - name: Rsync To Deploy New Build
-              uses: burnett01/rsync-deployments@7.0.1
-              with:
-                switches: -avzr --delete
-                path: public/
-                remote_path: /var/www/html/
-                remote_user: ${{ secrets.HOST_USERNAME }}
-                remote_host: ${{ secrets.HOST }}
-                remote_key: ${{ secrets.HOST_AUTH }}
+            - name: Clean remote directory and copy new files
+              env:
+                SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+                REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+                REMOTE_USER: ${{ secrets.REMOTE_USER }}
+              run: |
+                echo "$SSH_PRIVATE_KEY" > private_key.pem
+                chmod 600 private_key.pem
+                ssh -i private_key.pem -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
+                scp -i private_key.pem -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                rm -f private_key.pem
             - run: echo "🍏 This job's status is ${{ job.status }}."
