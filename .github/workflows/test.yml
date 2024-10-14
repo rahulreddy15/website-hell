@@ -26,23 +26,12 @@ jobs:
                 REMOTE_USER: ${{ secrets.REMOTE_USER }}
                 REMOTE_PASS: ${{ secrets.REMOTE_PASS }}
               run: |
-                echo "$SSH_PRIVATE_KEY" > private_key.pem
-                chmod 600 private_key.pem
-                
-                echo "Attempting SSH connection with key..."
-                if ssh -i private_key.pem -o StrictHostKeyChecking=no -o BatchMode=yes $REMOTE_USER@$REMOTE_HOST "echo SSH key authentication successful"; then
-                  echo "SSH key authentication successful, proceeding with file operations"
-                  SSH_CMD="ssh -i private_key.pem -o StrictHostKeyChecking=no"
-                  SCP_CMD="scp -i private_key.pem"
-                else
-                  echo "SSH key authentication failed, falling back to password authentication"
-                  sudo apt-get install -y sshpass
-                  SSH_CMD="sshpass -p $REMOTE_PASS ssh -o StrictHostKeyChecking=no"
-                  SCP_CMD="sshpass -p $REMOTE_PASS scp"
-                fi
+                echo "Connecting with password authentication"
+                sudo apt-get install -y sshpass
+                SSH_CMD="sshpass -p $REMOTE_PASS ssh -o StrictHostKeyChecking=no"
+                SCP_CMD="sshpass -p $REMOTE_PASS scp"
                 
                 $SSH_CMD $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
                 $SCP_CMD -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
                 
-                rm -f private_key.pem
             - run: echo "🍏 This job's status is ${{ job.status }}."
