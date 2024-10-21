@@ -4,6 +4,7 @@ date = 2020-11-27T08:10:55+05:30
 type = "post"
 description = "My frustrations on how analysis paralysis slows me down"
 in_search_index = true
+authors = ["Rahul Annareddy"]
 [taxonomies]
 tags = ["Thoughts"]
 +++
