@@ -1,4 +1,4 @@
-name: GitHub Actions Test
+name: Deploy to Server
 run-name: Deployment Action Triggered (${{ github.run_id }}) 🚀
 on: [push]
 jobs:
