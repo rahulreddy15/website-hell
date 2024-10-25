@@ -48,9 +48,13 @@ visible_on_load = true
 name = "Blog"
 url = "@/blog/_index.md"
 
-[[extra.main_menu]]
-name = "Bear"
-url = "@/bear.md"
+# [[extra.main_menu]]
+# name = "Health"
+# url = "@/health/_index.md"
+
+# [[extra.main_menu]]
+# name = "Bear"
+# url = "@/bear.md"
 
 [[extra.main_menu]]
 name = "Contact"
