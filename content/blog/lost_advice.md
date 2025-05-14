@@ -46,3 +46,5 @@ Cant talk to women? Fuck you, mind, youre a liar. Try. Swing out. Try again. Til
 Anyways thats it. Sorry this was a really long, pretentious way to say TL:DR the mind plays tricks. It gets better.
 
 Oh and learn the stock market. And consider college again. And forgive yourself. And others.
+
+PS: This reads autobiographical but it is not. This is collected from several people.
