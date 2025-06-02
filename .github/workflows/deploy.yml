@@ -5,6 +5,11 @@ on:
     push:
         branches:
             - main
+
+# Add explicit permissions for the workflow
+permissions:
+    contents: read
+
 jobs:
     explore-actions:
         runs-on: ubuntu-latest
@@ -12,31 +17,54 @@ jobs:
             - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
             - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
             - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+            
             - name: Check out repository code
               uses: actions/checkout@v4
+              
             - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+            
             - name: Install Zola
               run: |
                 sudo snap install zola --edge
+                
             - name: Build Zola Application
               run: |
                 zola build
                 echo "Files in build directory"
-                ls ${{ github.workspace}}/public
-            - name: SSH Connection and File Transfer
+                ls ${{ github.workspace }}/public
+                
+            - name: Setup SSH
+              run: |
+                # Install sshpass for password authentication
+                sudo apt-get update
+                sudo apt-get install -y sshpass
+                
+                # Create SSH directory and set proper permissions
+                mkdir -p ~/.ssh
+                chmod 700 ~/.ssh
+                
+                # Add remote host to known_hosts to avoid host key verification
+                ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+                
+            - name: Deploy to Server
               env:
-                SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
                 REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
                 REMOTE_USER: ${{ secrets.REMOTE_USER }}
                 REMOTE_PASS: ${{ secrets.REMOTE_PASS }}
               run: |
-                echo "Connecting with password authentication"
-                sudo apt-get install -y sshpass
-                SSH_CMD="sshpass -p $REMOTE_PASS ssh -o StrictHostKeyChecking=no"
-                SCP_CMD="sshpass -p $REMOTE_PASS scp"
+                echo "Deploying to server..."
                 
-                $SSH_CMD $REMOTE_USER@$REMOTE_HOST "rm -rf /var/www/html/*"
-                $SCP_CMD -r ${{ github.workspace }}/public/* $REMOTE_USER@$REMOTE_HOST:/var/www/html/
+                # Clear existing files on server (with sudo if needed)
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "sudo rm -rf /var/www/html/* || rm -rf /var/www/html/*"
+                
+                # Copy new files to server
+                sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
+                  ${{ github.workspace }}/public/* "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy_temp/"
+                
+                # Move files from temp to final destination with proper permissions
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "sudo mkdir -p /tmp/deploy_temp && sudo mv /tmp/deploy_temp/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/ && sudo chmod -R 755 /var/www/html/"
                 
             - name: Job Status
               run: echo "🍏 This job's status is ${{ job.status }}."
