@@ -9,7 +9,7 @@ const NO_MESSAGES = [
   'Think again, future wifey!',
   'PLEASEEEEE 🥺',
   'Think again, future wifey!',
-  "Nikita don't do this to me!",
+  "Nikki don't do this to me!",
   "I'll cancel the wedding! (jk I won't)",
   'I refuse to accept!',
   "I'll fill our house with tulips!",
@@ -49,7 +49,7 @@ const QUIZ_QUESTIONS = [
     question: "What car did we rent on Zoomcar when I came to Pune, but then it was sadly not available and we had to get a different car?",
     options: ["Tata Altroz", "Tata Nexon", "Maruti Vitara Brezza", "Suzuki Baleno"],
     correct: 1, // Change this to the correct index
-    reaction: { right: "Wow !! Waah. What a memory 🎵💖", wrong: "OMG Nikita. You might be getting old! 😭" },
+    reaction: { right: "Wow !! Waah. What a memory 🎵💖", wrong: "OMG Nikki. You might be getting old! How could you forget 😭" },
   },
   {
     question: "What biscuit did we have for New Years 2026?",
@@ -61,7 +61,7 @@ const QUIZ_QUESTIONS = [
 ]
 
 const FAIL_MESSAGES = [
-  "Nikita... is that really you?! 🤔",
+  "Nikki... is that really you?! 🤔",
   "The wedding is DEFINITELY still on... but wow 😂",
 ]
 
@@ -442,7 +442,7 @@ function Quiz({ onPass }) {
           <div className="quiz-icon">🔐</div>
           <h2 className="quiz-title">Identity Verification</h2>
           <p className="quiz-subtitle">
-            This message is only for Nikita. Prove it's you!
+            This message is only for Nikki. Prove it's you!
           </p>
         </div>
 
@@ -572,7 +572,7 @@ function App() {
             <div className="envelope-icon">💌</div>
             <p className="tap-text">tap to open</p>
           </div>
-          <p className="intro-text">Hey Nikita, your future husband has something to ask... 💍</p>
+          <p className="intro-text">Hey Nikki, your future husband has something to ask... 💍</p>
         </div>
       </div>
     )
@@ -594,7 +594,7 @@ function App() {
           <h1 className="celebration-title">She said yes... again!!</h1>
           <div className="celebration-message">
             <Typewriter
-              text="Nikita, you already agreed to marry me..."
+              text="Nikki, you already agreed to marry me..."
               speed={35}
               delay={500}
               onDone={() => setTypeLine(1)}
@@ -658,7 +658,7 @@ function App() {
         <div className={`bear-face ${bearMood.label}`}>
           <span className="bear-emoji">{bearMood.face}</span>
         </div>
-        <h1 className="question">Nikita, will you be my Valentine?</h1>
+        <h1 className="question">Kasireddy Nikita, will you be my Valentine?</h1>
         <p className="sub-text">
           {noCount === 0
             ? "I know you already said yes to forever, but..."
@@ -668,7 +668,7 @@ function App() {
                 ? "You agreed to MARRY me but won't be my Valentine?!"
                 : noCount < 9
                   ? "I WILL keep asking forever... which I can, because we're getting married! 🥺"
-                  : "Nikita please, I'll fill our entire wedding venue with tulips! 🌷💍"}
+                  : "Nikki please, I'll fill our entire wedding venue with tulips! 🌷💍"}
         </p>
         <div className="buttons">
           <button
