@@ -5,10 +5,9 @@ const FLOATING_EMOJIS = ['💕', '💗', '💖', '💘', '💝', '🌷', '🪷',
 
 const NO_MESSAGES = [
   'No',
-  'Are you sure, Nikita?',
-  'Really sure?',
-  'Pookie please',
   "We're literally engaged!",
+  'Think again, future wifey!',
+  'PLEASEEEEE 🥺',
   'Think again, future wifey!',
   "Nikita don't do this to me!",
   "I'll cancel the wedding! (jk I won't)",
@@ -25,6 +24,45 @@ const BEAR_MOODS = [
   { face: '😢', label: 'sad' },
   { face: '😭', label: 'crying' },
   { face: '💀', label: 'devastated' },
+]
+
+const QUIZ_QUESTIONS = [
+  {
+    question: "Where did we go on our first date?",
+    options: ["Niloufer Cafe", "Manam Chocolate", "Telugu Medium", "Blue Tokai Coffee Roasters"],
+    correct: 2, // Change this to the correct index
+    reaction: { right: "You remember! 🥰", wrong: "Excuse me?! Did you forget the Brocolli Malai?! 😤" },
+  },
+  {
+    question: "How many times have we said goodbye to each other before leaving by train?",
+    options: ["9", "2", "6", "3"],
+    correct: 3, // Change this to the correct index
+    reaction: { right: "You remember so well! 😍", wrong: "You remeber to the Sarvowski bracelet but not this ?! 💀" },
+  },
+  {
+    question: "What's the first thing I noticed about you?",
+    options: ["Your smile", "Your eyes", "Your laugh", "Your caring nature"],
+    correct: 0, // Change this to the correct index
+    reaction: { right: "Still can't stop staring! 🥰", wrong: "How do you not know this, future wifey?! 💍😩" },
+  },
+  {
+    question: "What car did we rent on Zoomcar when I came to Pune, but then it was sadly not available and we had to get a different car?",
+    options: ["Tata Altroz", "Tata Nexon", "Maruti Vitara Brezza", "Suzuki Baleno"],
+    correct: 1, // Change this to the correct index
+    reaction: { right: "Wow !! Waah. What a memory 🎵💖", wrong: "OMG Nikita. You might be getting old! 😭" },
+  },
+  {
+    question: "What biscuit did we have for New Years 2026?",
+    options: ["Parle G", "MariGold", "Osmania Biscuit", "Milano"],
+    correct: 3, // Change this to the correct index
+    reaction: { right: "Haha yep, that's the one! 😂💕", wrong: "Come on, try and remember the taste! 😅" },
+  },
+  
+]
+
+const FAIL_MESSAGES = [
+  "Nikita... is that really you?! 🤔",
+  "The wedding is DEFINITELY still on... but wow 😂",
 ]
 
 // ── Sparkle cursor ──────────────────────────────────────────────
@@ -321,9 +359,148 @@ function ConfettiRain() {
   ))
 }
 
+// ── Quiz component ──────────────────────────────────────────────
+function Quiz({ onPass }) {
+  const [currentQ, setCurrentQ] = useState(0)
+  const [score, setScore] = useState(0)
+  const [selected, setSelected] = useState(null)
+  const [showReaction, setShowReaction] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [shaking, setShaking] = useState(false)
+
+  const q = QUIZ_QUESTIONS[currentQ]
+  const isCorrect = selected === q.correct
+  const progress = ((currentQ) / QUIZ_QUESTIONS.length) * 100
+
+  const handleSelect = (idx) => {
+    if (showReaction) return
+    setSelected(idx)
+    setShowReaction(true)
+
+    const correct = idx === q.correct
+    if (correct) {
+      setScore((s) => s + 1)
+    } else {
+      setShaking(true)
+      setTimeout(() => setShaking(false), 500)
+    }
+
+    setTimeout(() => {
+      if (currentQ < QUIZ_QUESTIONS.length - 1) {
+        setCurrentQ((c) => c + 1)
+        setSelected(null)
+        setShowReaction(false)
+      } else {
+        // Quiz finished
+        const finalScore = correct ? score + 1 : score
+        if (finalScore === QUIZ_QUESTIONS.length) {
+          onPass()
+        } else {
+          setFailed(true)
+        }
+      }
+    }, 1500)
+  }
+
+  const handleRetake = () => {
+    setCurrentQ(0)
+    setScore(0)
+    setSelected(null)
+    setShowReaction(false)
+    setFailed(false)
+  }
+
+  if (failed) {
+    const wrongCount = QUIZ_QUESTIONS.length - score
+    return (
+      <div className="valentine-container">
+        <SparkleCursor />
+        <FloatingHearts count={10} />
+        <div className="content quiz-fail">
+          <div className="fail-emoji">😤</div>
+          <h1 className="fail-title">Identity Verification Failed!</h1>
+          <p className="fail-score">You got {score}/{QUIZ_QUESTIONS.length} right</p>
+          <div className="fail-messages">
+            {FAIL_MESSAGES.slice(0, Math.min(wrongCount + 1, FAIL_MESSAGES.length)).map((msg, i) => (
+              <p key={i} className="fail-message" style={{ animationDelay: `${i * 0.3}s` }}>{msg}</p>
+            ))}
+          </div>
+          <button className="btn-retake" onClick={handleRetake}>
+            Fine, let me try again 😅
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`valentine-container ${shaking ? 'shake' : ''}`}>
+      <SparkleCursor />
+      <FloatingHearts count={10} />
+      <div className="content quiz-content">
+        <div className="quiz-header">
+          <div className="quiz-icon">🔐</div>
+          <h2 className="quiz-title">Identity Verification</h2>
+          <p className="quiz-subtitle">
+            This message is only for Nikita. Prove it's you!
+          </p>
+        </div>
+
+        <div className="quiz-progress-bar">
+          <div className="quiz-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="quiz-counter">Question {currentQ + 1} of {QUIZ_QUESTIONS.length}</p>
+
+        <div className="quiz-question-card">
+          <h3 className="quiz-question">{q.question}</h3>
+          <div className="quiz-options">
+            {q.options.map((opt, idx) => {
+              let cls = 'quiz-option'
+              if (showReaction) {
+                if (idx === q.correct) cls += ' correct'
+                else if (idx === selected && !isCorrect) cls += ' wrong'
+              }
+              if (idx === selected) cls += ' selected'
+              return (
+                <button
+                  key={idx}
+                  className={cls}
+                  onClick={() => handleSelect(idx)}
+                  disabled={showReaction}
+                >
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {showReaction && (
+          <p className={`quiz-reaction ${isCorrect ? 'correct' : 'wrong'}`}>
+            {isCorrect ? q.reaction.right : q.reaction.wrong}
+          </p>
+        )}
+
+        <div className="quiz-score-dots">
+          {QUIZ_QUESTIONS.map((_, i) => (
+            <span
+              key={i}
+              className={`score-dot ${
+                i < currentQ ? 'answered' :
+                i === currentQ && showReaction ? (isCorrect ? 'correct' : 'wrong') :
+                ''
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main App ────────────────────────────────────────────────────
 function App() {
-  const [stage, setStage] = useState('envelope') // envelope | question | celebration
+  const [stage, setStage] = useState('envelope') // envelope | quiz | question | celebration
   const [noCount, setNoCount] = useState(0)
   const [shaking, setShaking] = useState(false)
   const [envelopeOpen, setEnvelopeOpen] = useState(false)
@@ -337,7 +514,11 @@ function App() {
 
   const handleOpenEnvelope = useCallback(() => {
     setEnvelopeOpen(true)
-    setTimeout(() => setStage('question'), 800)
+    setTimeout(() => setStage('quiz'), 800)
+  }, [])
+
+  const handleQuizPass = useCallback(() => {
+    setStage('question')
   }, [])
 
   const handleNo = useCallback(() => {
@@ -395,6 +576,11 @@ function App() {
         </div>
       </div>
     )
+  }
+
+  // ── Quiz stage ────────────────────────────────────────────────
+  if (stage === 'quiz') {
+    return <Quiz onPass={handleQuizPass} />
   }
 
   // ── Celebration stage ───────────────────────────────────────
