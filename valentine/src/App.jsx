@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import './App.css'
 
-const FLOATING_EMOJIS = ['💕', '💗', '💖', '💘', '💝', '🌷', '🪷', '🌸', '🩷']
+const FLOATING_EMOJIS = ['💕', '💗', '💖', '💘', '💝', '🌷', '🪷', '🌸', '🩷', '💍']
 
 const NO_MESSAGES = [
   'No',
   'Are you sure, Nikita?',
   'Really sure?',
   'Pookie please',
-  'Think again!',
-  'Last chance!',
+  "We're literally engaged!",
+  'Think again, future wifey!',
   "Nikita don't do this to me!",
-  'You might regret this!',
+  "I'll cancel the wedding! (jk I won't)",
   'I refuse to accept!',
-  'This is not a drill!',
-  "I'll buy you all the tulips!",
+  "I'll fill our house with tulips!",
+  "You said yes to MARRIAGE but not this?!",
   'PLEASEEEEE 🥺',
 ]
 
@@ -391,7 +391,7 @@ function App() {
             <div className="envelope-icon">💌</div>
             <p className="tap-text">tap to open</p>
           </div>
-          <p className="intro-text">Hey Nikita, you have a special message...</p>
+          <p className="intro-text">Hey Nikita, your future husband has something to ask... 💍</p>
         </div>
       </div>
     )
@@ -404,11 +404,11 @@ function App() {
         <Fireworks />
         <ConfettiRain />
         <div className="celebration">
-          <div className="celebration-emoji">💕</div>
-          <h1 className="celebration-title">Yaaaay!!</h1>
+          <div className="celebration-emoji">💍</div>
+          <h1 className="celebration-title">She said yes... again!!</h1>
           <div className="celebration-message">
             <Typewriter
-              text="Nikita, you just made me the happiest person in the world."
+              text="Nikita, you already agreed to marry me..."
               speed={35}
               delay={500}
               onDone={() => setTypeLine(1)}
@@ -417,7 +417,7 @@ function App() {
               <>
                 <br /><br />
                 <Typewriter
-                  text="Every day with you feels like a garden full of lilies and tulips in bloom."
+                  text="...but being your Valentine still makes my heart race just the same."
                   speed={30}
                   delay={300}
                   onDone={() => setTypeLine(2)}
@@ -428,8 +428,8 @@ function App() {
               <>
                 <br /><br />
                 <Typewriter
-                  text="Your caring heart is the most beautiful thing I know."
-                  speed={30}
+                  text="Every day with you feels like a garden full of lilies and tulips in bloom. Your deeply caring heart is my favorite place in the world."
+                  speed={25}
                   delay={300}
                   onDone={() => setTypeLine(3)}
                 />
@@ -439,8 +439,8 @@ function App() {
               <>
                 <br /><br />
                 <Typewriter
-                  text="Happy Valentine's Day, my love. 💖"
-                  speed={35}
+                  text="Can't wait to spend every Valentine's Day with you, forever. Happy Valentine's Day, my future wifey. 💖"
+                  speed={30}
                   delay={300}
                 />
               </>
@@ -450,10 +450,10 @@ function App() {
             <span className="heart-bounce" style={{ animationDelay: '0s' }}>🌷</span>
             <span className="heart-bounce" style={{ animationDelay: '0.1s' }}>💖</span>
             <span className="heart-bounce" style={{ animationDelay: '0.2s' }}>🪷</span>
-            <span className="heart-bounce" style={{ animationDelay: '0.3s' }}>💗</span>
-            <span className="heart-bounce" style={{ animationDelay: '0.4s' }}>🌷</span>
-            <span className="heart-bounce" style={{ animationDelay: '0.5s' }}>💕</span>
-            <span className="heart-bounce" style={{ animationDelay: '0.6s' }}>🪷</span>
+            <span className="heart-bounce" style={{ animationDelay: '0.3s' }}>💍</span>
+            <span className="heart-bounce" style={{ animationDelay: '0.4s' }}>🪷</span>
+            <span className="heart-bounce" style={{ animationDelay: '0.5s' }}>💖</span>
+            <span className="heart-bounce" style={{ animationDelay: '0.6s' }}>🌷</span>
           </div>
         </div>
       </div>
@@ -475,14 +475,14 @@ function App() {
         <h1 className="question">Nikita, will you be my Valentine?</h1>
         <p className="sub-text">
           {noCount === 0
-            ? 'I have a very important question for you...'
+            ? "I know you already said yes to forever, but..."
             : noCount < 3
-              ? "Come on Nikita, you know you want to say yes..."
+              ? "Come on future Mrs., you know you want to say yes..."
               : noCount < 6
-                ? "I'm not giving up on you that easily!"
+                ? "You agreed to MARRY me but won't be my Valentine?!"
                 : noCount < 9
-                  ? "I WILL keep asking forever, Nikita!!! 🥺"
-                  : "Nikita please, I'll get you a whole field of tulips! 🌷"}
+                  ? "I WILL keep asking forever... which I can, because we're getting married! 🥺"
+                  : "Nikita please, I'll fill our entire wedding venue with tulips! 🌷💍"}
         </p>
         <div className="buttons">
           <button
@@ -493,7 +493,7 @@ function App() {
               fontSize: `${1.2 + noCount * 0.1}rem`,
             }}
           >
-            {noCount < 3 ? 'Yes! 💖' : noCount < 6 ? 'YES PLEASE! 🌷' : 'YESSS!! 💖🌷💖'}
+            {noCount < 3 ? 'Yes! 💖' : noCount < 6 ? 'YES PLEASE! 🌷' : 'OBVIOUSLY YES!! 💍💖🌷'}
           </button>
           <button
             ref={noBtnRef}
