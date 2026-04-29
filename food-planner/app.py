@@ -96,7 +96,7 @@ def week_end(start_date: str) -> str:
 
 
 def ensure_schema() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with db() as conn:
         conn.executescript(
             """
