@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Couple Meal Planner</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">mp</div>
+          <div>
+            <p class="eyebrow">Weekly kitchen rhythm</p>
+            <h1>Meal Planner</h1>
+          </div>
+        </div>
+        <nav class="tabs" aria-label="Primary navigation">
+          <button class="tab active" data-view="plan">Plan</button>
+          <button class="tab" data-view="shopping">Shopping</button>
+          <button class="tab" data-view="library">Library</button>
+          <button class="tab" data-view="archive">Archive</button>
+          <button class="tab accent" data-view="flow">Sunday Flow</button>
+        </nav>
+      </header>
+
+      <main id="app" class="app" aria-live="polite">
+        <section class="loading-card">Loading your meal plan...</section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

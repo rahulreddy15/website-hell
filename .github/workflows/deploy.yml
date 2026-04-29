@@ -33,18 +33,12 @@ jobs:
                 echo "Files in build directory"
                 ls ${{ github.workspace }}/public
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                node-version: '20'
-
-            - name: Build Valentine App
+            - name: Validate Food Planner
               run: |
-                cd valentine
-                npm ci
-                npm run build
-                echo "Valentine app built:"
-                ls dist/
+                python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
+                python3 food-planner/smoke_test.py
+                bash -n food-planner/deploy/install.sh
+                bash -n food-planner/deploy/check-vm-prereqs.sh
 
             - name: Setup SSH
               run: |
@@ -67,9 +61,13 @@ jobs:
               run: |
                 echo "Deploying to server..."
 
+                # Prepare temporary upload directories before scp.
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "rm -rf /tmp/deploy_temp /tmp/food_planner_release && mkdir -p /tmp/deploy_temp /tmp/food_planner_release"
+
                 # Clear existing files on server (with sudo if needed)
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
-                  "sudo rm -rf /var/www/html/* || rm -rf /var/www/html/*"
+                  "sudo mkdir -p /var/www/html && sudo rm -rf /var/www/html/* || rm -rf /var/www/html/*"
 
                 # Copy Zola site to server
                 sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
@@ -77,18 +75,18 @@ jobs:
 
                 # Move files from temp to final destination with proper permissions
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
-                  "sudo mkdir -p /tmp/deploy_temp && sudo mv /tmp/deploy_temp/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/ && sudo chmod -R 755 /var/www/html/"
+                  "sudo mv /tmp/deploy_temp/* /var/www/html/ && sudo chown -R root:root /var/www/html/ && sudo chmod -R 755 /var/www/html/"
 
-                # Deploy Valentine app
-                echo "Deploying Valentine app..."
-                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
-                  "sudo rm -rf /var/www/valentine && sudo mkdir -p /var/www/valentine"
-
+                # Deploy Food Planner app and backend service.
+                echo "Deploying Food Planner app..."
                 sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
-                  ${{ github.workspace }}/valentine/dist/* "$REMOTE_USER@$REMOTE_HOST:/tmp/valentine_temp/"
+                  ${{ github.workspace }}/food-planner/* "$REMOTE_USER@$REMOTE_HOST:/tmp/food_planner_release/"
 
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
-                  "sudo mkdir -p /tmp/valentine_temp && sudo mv /tmp/valentine_temp/* /var/www/valentine/ && sudo chown -R www-data:www-data /var/www/valentine/ && sudo chmod -R 755 /var/www/valentine/"
+                  "cd /tmp/food_planner_release && sudo bash deploy/install.sh"
+
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "curl -fsS http://127.0.0.1:8010/api/bootstrap >/dev/null && curl -fsS https://rahulreddy.in/food-planner/api/bootstrap >/dev/null"
 
             - name: Job Status
               run: echo "🍏 This job's status is ${{ job.status }}."

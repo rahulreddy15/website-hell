@@ -1,0 +1,21 @@
+[Unit]
+Description=Food Planner web application
+After=network.target
+
+[Service]
+Type=simple
+User=food-planner
+Group=food-planner
+WorkingDirectory=/opt/food-planner/current
+Environment=HOST=127.0.0.1
+Environment=PORT=8010
+Environment=MEAL_PLANNER_DB=/var/lib/food-planner/meal_planner.sqlite3
+ExecStart=/usr/bin/env python3 /opt/food-planner/current/app.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

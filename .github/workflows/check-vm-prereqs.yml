@@ -1,0 +1,36 @@
+name: Check VM Prerequisites
+
+on:
+    pull_request:
+        branches:
+            - main
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    check-vm-prereqs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository code
+              uses: actions/checkout@v4
+
+            - name: Validate prerequisite checker syntax
+              run: bash -n food-planner/deploy/check-vm-prereqs.sh
+
+            - name: Setup SSH
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y sshpass
+                mkdir -p ~/.ssh
+                chmod 700 ~/.ssh
+                ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+            - name: Check VM prerequisites
+              env:
+                REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+                REMOTE_USER: ${{ secrets.REMOTE_USER }}
+                REMOTE_PASS: ${{ secrets.REMOTE_PASS }}
+              run: |
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" 'bash -s' < food-planner/deploy/check-vm-prereqs.sh

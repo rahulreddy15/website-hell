@@ -1,0 +1,7 @@
+# Food Planner is served by the Python app on localhost.
+# This snippet is inserted inside the rahulreddy.in site block by install.sh.
+redir /food-planner /food-planner/
+
+handle_path /food-planner/* {
+    reverse_proxy 127.0.0.1:8010
+}
