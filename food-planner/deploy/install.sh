@@ -82,7 +82,12 @@ install_service() {
   systemctl daemon-reload
   systemctl enable "$APP_NAME"
   systemctl restart "$APP_NAME"
-  systemctl is-active --quiet "$APP_NAME"
+}
+
+print_service_diagnostics() {
+  echo "Food Planner service did not become healthy. Diagnostics follow:" >&2
+  systemctl status "$APP_NAME" --no-pager --lines=50 >&2 || true
+  journalctl -u "$APP_NAME" --no-pager -n 100 >&2 || true
 }
 
 insert_snippet_in_site_block() {
@@ -157,7 +162,16 @@ install_caddy_route() {
 }
 
 verify_app() {
-  curl -fsS "http://127.0.0.1:8010/api/bootstrap" >/dev/null
+  local attempt
+  for attempt in $(seq 1 30); do
+    if systemctl is-active --quiet "$APP_NAME" && curl -fsS "http://127.0.0.1:8010/api/bootstrap" >/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  print_service_diagnostics
+  return 1
 }
 
 install_packages
