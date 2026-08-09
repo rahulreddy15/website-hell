@@ -11,6 +11,25 @@ python3 smoke_test.py
 Configuration: `SYMPTOM_TRACKER_DB`, `HOST`, `PORT`, and `BASE_PATH` (default `/tracker`).
 The password is scrypt-hashed with a random installation salt; it is never stored plaintext.
 
+### Local development and LAN testing
+
+The session cookie is `Secure` by default, and browsers refuse to store a `Secure` cookie on
+a plain `http://` origin. Chrome makes an exception for `localhost`; Safari and phones on the
+LAN do not, so login appears to succeed and the session is silently dropped.
+
+For local use only, opt in explicitly:
+
+```sh
+SYMPTOM_TRACKER_DEV_INSECURE_COOKIE=1 HOST=0.0.0.0 python3 app.py
+```
+
+`HOST=0.0.0.0` also exposes the app to your LAN so a phone can reach it at
+`http://<your-lan-ip>:8011/tracker/`.
+
+**Never set `SYMPTOM_TRACKER_DEV_INSECURE_COOKIE` in production.** It is opt-in precisely so
+the deployed service, which sits behind Caddy's TLS, cannot lose `Secure` by accident. The
+systemd unit does not set it.
+
 `schema.sql` preserves the authoritative DDL and adds FTS synchronization plus server-only
 authentication tables. SQLite accepts the generated `date()`/`unixepoch()` expressions as
 deterministic (tested by `smoke_test.py`, including explicit offsets around a DST transition).

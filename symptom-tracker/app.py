@@ -22,6 +22,12 @@ PUBLIC_DIR = BASE_DIR / "public"
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8011"))
 BASE_PATH = os.environ.get("BASE_PATH", "/tracker").rstrip("/")
+# Browsers refuse to store a Secure cookie on a plain http:// origin, so local development
+# and LAN testing cannot hold a session. This must be opt-in and explicit: production sits
+# behind Caddy's TLS and must never drop Secure by accident, so the default stays on and
+# only an operator setting this variable by hand can weaken it.
+DEV_INSECURE_COOKIE = os.environ.get("SYMPTOM_TRACKER_DEV_INSECURE_COOKIE") == "1"
+COOKIE_FLAGS = "HttpOnly; SameSite=Strict" if DEV_INSECURE_COOKIE else "HttpOnly; Secure; SameSite=Strict"
 
 def one(query: dict, name: str, default: str = "") -> str:
     return query.get(name, [default])[0]
@@ -125,7 +131,7 @@ class Handler(BaseHTTPRequestHandler):
             if not store.login_allowed(conn,remote): self.send_json({"error":"Too many login attempts"},429); return
             ok=store.verify_password(conn,str(payload.get("password",""))); conn.execute("INSERT INTO login_attempt VALUES(?,?,?)",(store.now_iso(),remote,int(ok)))
             if not ok: print(f"Failed symptom-tracker login from {remote}"); self.send_json({"error":"Invalid credentials"},401); return
-            token=store.create_session(conn); self.send_json({"authenticated":True},headers={"Set-Cookie":f"symptom_session={token}; Path={BASE_PATH or '/'}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict"}); return
+            token=store.create_session(conn); self.send_json({"authenticated":True},headers={"Set-Cookie":f"symptom_session={token}; Path={BASE_PATH or '/'}; Max-Age=2592000; {COOKIE_FLAGS}"}); return
         if method=="POST" and path=="/api/auth/logout":
             token=self.session_token()
             if token:
@@ -135,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
                 for row in conn.execute("SELECT token_hash FROM auth_session"):
                     if hmac.compare_digest(supplied,row[0]):
                         conn.execute("DELETE FROM auth_session WHERE token_hash=?",(row[0],)); break
-            self.send_json({"authenticated":False},headers={"Set-Cookie":f"symptom_session=; Path={BASE_PATH or '/'}; Max-Age=0; HttpOnly; Secure; SameSite=Strict"}); return
+            self.send_json({"authenticated":False},headers={"Set-Cookie":f"symptom_session=; Path={BASE_PATH or '/'}; Max-Age=0; {COOKIE_FLAGS}"}); return
         if method=="POST" and path=="/api/sync": self.send_json({"results":store.sync_push(conn,payload)}); return
         if method=="POST" and path=="/api/items": self.send_json({"status":store.upsert(conn,"items",payload),"id":payload.get("id")},201); return
         if method=="PUT" and len(parts)==4 and parts[:2]==["api","items"] and parts[3]=="attributes": self.send_json(store.set_item_attributes(conn,parts[2],payload)); return
