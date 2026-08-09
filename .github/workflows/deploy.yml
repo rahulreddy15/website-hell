@@ -1,8 +1,16 @@
 name: Deploy to Server
-run-name: Deployment Action Triggered (${{ github.run_id }}) 🚀
+run-name: >-
+    ${{ github.event_name == 'pull_request'
+        && format('Build check for PR #{0} 🔍', github.event.pull_request.number)
+        || format('Deployment Action Triggered ({0}) 🚀', github.run_id) }}
 on:
     workflow_dispatch:
     push:
+        branches:
+            - main
+    # Pull requests build and validate only; the deploy steps below are
+    # gated so a PR never touches the production VM.
+    pull_request:
         branches:
             - main
 
@@ -33,6 +41,12 @@ jobs:
                 echo "Files in build directory"
                 ls ${{ github.workspace }}/blog/public
 
+            - name: Check Zola Site
+              run: |
+                # Skip external links: third-party sites cause flaky CI failures.
+                # Run 'zola --root blog check' locally to validate them.
+                zola --root blog check --skip-external-links
+
             - name: Validate Food Planner
               run: |
                 python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
@@ -41,6 +55,7 @@ jobs:
                 bash -n food-planner/deploy/check-vm-prereqs.sh
 
             - name: Setup SSH
+              if: github.event_name != 'pull_request'
               run: |
                 # Install sshpass for password authentication
                 sudo apt-get update
@@ -54,6 +69,7 @@ jobs:
                 ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
 
             - name: Deploy to Server
+              if: github.event_name != 'pull_request'
               env:
                 REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
                 REMOTE_USER: ${{ secrets.REMOTE_USER }}
