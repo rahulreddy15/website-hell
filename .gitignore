@@ -4,3 +4,7 @@
 /food-planner/data
 /food-planner/__pycache__
 /food-planner/**/*.pyc
+/symptom-tracker/data
+/symptom-tracker/**/__pycache__
+/symptom-tracker/**/*.pyc
+/symptom-tracker/**/*.sqlite3

@@ -1,0 +1,23 @@
+[Unit]
+Description=Symptom Tracker web application
+After=network.target
+
+[Service]
+Type=simple
+User=symptom-tracker
+Group=symptom-tracker
+WorkingDirectory=/opt/symptom-tracker/current
+Environment=HOST=127.0.0.1
+Environment=PORT=8011
+Environment=BASE_PATH=/tracker
+Environment=SYMPTOM_TRACKER_DB=/var/lib/symptom-tracker/symptom_tracker.sqlite3
+EnvironmentFile=-/etc/symptom-tracker.env
+ExecStart=/usr/bin/env python3 /opt/symptom-tracker/current/app.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
