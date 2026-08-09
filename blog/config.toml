@@ -10,12 +10,22 @@ compile_sass = false
 # Whether to build a search index to be used later on by a JavaScript library
 build_search_index = false
 
+# Agent guides live alongside content but are not pages
+ignored_content = ["**/AGENTS.md"]
+
 taxonomies = [
   { name = "categories", feed = true },
   { name = "tags", feed = true },
 ]
 
 default_language = "en"
+
+# NOTE: every bare key above must stay above the first table header below,
+# otherwise TOML absorbs it into that table.
+
+[link_checker]
+# LinkedIn returns HTTP 999 to non-browser clients; not a real broken link
+skip_prefixes = ["https://linkedin.com/", "https://www.linkedin.com/"]
 
 [translations]
 no_posts = "No posts yet"
@@ -27,14 +37,13 @@ language = "language"
 site = "site"
 
 [markdown]
-# Syntax highlighting configuration
-# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
-[markdown.highlighting]
-enabled = true
-theme = "github-dark"
-
 render_emoji = true
 smart_punctuation = true
+
+# Syntax highlighting configuration
+# Theme can be customised by setting `theme` to any theme supported by Zola
+[markdown.highlighting]
+theme = "github-dark"
 
 [extra]
 date_format="%d %b, %Y"

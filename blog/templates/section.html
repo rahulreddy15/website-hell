@@ -2,7 +2,7 @@
 
 {%- block main -%}
   <main>
-    {%- if taxonomy.term %}
+    {%- if taxonomy is defined and taxonomy.term %}
       <h3 class="filter">{{ trans(key="filtering_for",lang=lang)}} "{{ section.title }}"</h3>
       <small>
         <a href="{{ get_url(path="@/blog/_index.md", lang=lang) }}">{{ trans(key="remove_filter", lang=lang) }}</a>
@@ -18,7 +18,7 @@
         <li>
           <span>
             <i>
-              <time datetime="{{ page.date | date(format='%+') }}" pubdate>
+              <time datetime="{{ page.date | date(format='%Y-%m-%d') }}" pubdate>
                 {{ page.date | date(format=config.extra.date_format) }}
               </time>
             </i>

@@ -7,7 +7,7 @@
 {% set article_published_time = "" -%}
 {% set article_modified_time = "" -%}
 
-{% if page -%}
+{% if page is defined -%}
     {% set og_type = "article" -%}
     {% set og_title = page.title -%}
     {% set og_description = page.description -%}
@@ -21,7 +21,7 @@
     {% endif -%}
 {% endif -%}
 
-<meta name="title" content="{% if page and page.title %}{{ page.title }}{% else %}{{ config.title }}{% endif %}">
+<meta name="title" content="{% if page is defined and page.title %}{{ page.title }}{% else %}{{ config.title }}{% endif %}">
 <meta property="og:site_name" content="{{ config.title }}">
 <meta property="og:type" content="{{ og_type }}">
 <meta property="og:title" content="{{ og_title }}">

@@ -1,8 +1,6 @@
 .DS_Store
-/public
 /scripts
-/archive/valentine/node_modules
-/archive/valentine/dist
+/blog/public
 /food-planner/data
 /food-planner/__pycache__
 /food-planner/**/*.pyc

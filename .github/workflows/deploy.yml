@@ -1,8 +1,16 @@
 name: Deploy to Server
-run-name: Deployment Action Triggered (${{ github.run_id }}) 🚀
+run-name: >-
+    ${{ github.event_name == 'pull_request'
+        && format('Build check for PR #{0} 🔍', github.event.pull_request.number)
+        || format('Deployment Action Triggered ({0}) 🚀', github.run_id) }}
 on:
     workflow_dispatch:
     push:
+        branches:
+            - main
+    # Pull requests build and validate only; the deploy steps below are
+    # gated so a PR never touches the production VM.
+    pull_request:
         branches:
             - main
 
@@ -23,15 +31,27 @@ jobs:
 
             - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
 
+            # Pinned deliberately. The templates use Tera v2 syntax, which
+            # requires Zola >= 0.22. 'snap install zola --edge' served an
+            # older Tera v1 build and failed to parse them, so do not
+            # replace this with an unpinned install.
             - name: Install Zola
-              run: |
-                sudo snap install zola --edge
+              uses: taiki-e/install-action@v2
+              with:
+                tool: zola@0.23.2
 
             - name: Build Zola Application
               run: |
-                zola build
+                zola --version
+                zola --root blog build
                 echo "Files in build directory"
-                ls ${{ github.workspace }}/public
+                ls ${{ github.workspace }}/blog/public
+
+            - name: Check Zola Site
+              run: |
+                # Skip external links: third-party sites cause flaky CI failures.
+                # Run 'zola --root blog check' locally to validate them.
+                zola --root blog check --skip-external-links
 
             - name: Validate Food Planner
               run: |
@@ -41,6 +61,7 @@ jobs:
                 bash -n food-planner/deploy/check-vm-prereqs.sh
 
             - name: Setup SSH
+              if: github.event_name != 'pull_request'
               run: |
                 # Install sshpass for password authentication
                 sudo apt-get update
@@ -54,6 +75,7 @@ jobs:
                 ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
 
             - name: Deploy to Server
+              if: github.event_name != 'pull_request'
               env:
                 REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
                 REMOTE_USER: ${{ secrets.REMOTE_USER }}
@@ -71,7 +93,7 @@ jobs:
 
                 # Copy Zola site to server
                 sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
-                  ${{ github.workspace }}/public/* "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy_temp/"
+                  ${{ github.workspace }}/blog/public/* "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy_temp/"
 
                 # Move files from temp to final destination with proper permissions
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \

@@ -9,11 +9,12 @@
     <title>{%- block title %}{{ config.title }}{%- endblock %}</title>
     <meta name="referrer" content="no-referrer-when-downgrade">
     {% include "og.html" %}
-    {%- if config.generate_feeds %}
     {% block rss -%}
-    <link rel="alternate" type={% if config.feed_filename == "atom.xml" %}"application/atom+xml"{% else %}"application/rss+xml"{% endif %} title="{{ config.title }}" href="{{ get_url(path=config.feed_filename) | safe }}">
-    {%- endblock -%}
-    {%- endif %}
+    {%- if config.generate_feeds %}
+    {%- set feed_filename = config.feed_filenames | first %}
+    <link rel="alternate" type={% if feed_filename == "atom.xml" %}"application/atom+xml"{% else %}"application/rss+xml"{% endif %} title="{{ config.title }}" href="{{ get_url(path=feed_filename) | safe }}">
+    {%- endif -%}
+    {%- endblock %}
     <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,7 +32,7 @@
             <a href="{{ config.base_url | safe }}">Home</a>
             {%- if config.extra.main_menu %}
             {%- for item in config.extra.main_menu %}
-            {%- if item.url is matching("https?://") %}
+            {%- if item.url is matching(pat="https?://") %}
             <a href="{{ item.url | safe }}">{{ item.name | safe }}</a>
             {%- else %}
             <a href="{{ get_url(path=item.url ) | safe }}">{{ item.name | safe }}</a>
