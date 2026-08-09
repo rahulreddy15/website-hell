@@ -9,6 +9,7 @@ import random
 import sys
 import tempfile
 import threading
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -137,7 +138,15 @@ with tempfile.TemporaryDirectory() as tmp:
         request=urllib.request.Request(f"http://127.0.0.1:{server.server_port}/tracker/api/auth/login",data=b'{"password":"wrong"}',headers={"Content-Type":"application/json"},method="POST")
         try: urllib.request.urlopen(request)
         except urllib.error.HTTPError as exc: assert exc.code==401
-        with db.connect() as conn: assert conn.execute("SELECT count(*) FROM login_attempt WHERE succeeded=0").fetchone()[0]==1
+        # The handler commits login_attempt on its own thread. ThreadingHTTPServer sets
+        # daemon_threads, so neither shutdown() nor join() waits for handler threads to
+        # finish; asserting immediately is a race that a slower runner loses. Poll instead.
+        deadline=time.monotonic()+10
+        while True:
+            with db.connect() as conn: failed=conn.execute("SELECT count(*) FROM login_attempt WHERE succeeded=0").fetchone()[0]
+            if failed==1 or time.monotonic()>deadline: break
+            time.sleep(0.05)
+        assert failed==1, f"expected exactly 1 failed login attempt, found {failed}"
     finally: server.shutdown(); server.server_close(); thread.join()
 
     # Version-3 migration adds nausea without losing existing rows.
