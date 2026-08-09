@@ -29,9 +29,9 @@ jobs:
 
             - name: Build Zola Application
               run: |
-                zola build
+                zola --root blog build
                 echo "Files in build directory"
-                ls ${{ github.workspace }}/public
+                ls ${{ github.workspace }}/blog/public
 
             - name: Validate Food Planner
               run: |
@@ -71,7 +71,7 @@ jobs:
 
                 # Copy Zola site to server
                 sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
-                  ${{ github.workspace }}/public/* "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy_temp/"
+                  ${{ github.workspace }}/blog/public/* "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy_temp/"
 
                 # Move files from temp to final destination with proper permissions
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
