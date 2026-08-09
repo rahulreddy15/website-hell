@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily off-VM Symptom Tracker backup
+
+[Timer]
+# The local VACUUM INTO snapshot starts at 03:15. This upload starts later and
+# refuses to use a snapshot older than 24 hours.
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=symptom-tracker-restic-backup.service
+
+[Install]
+WantedBy=timers.target

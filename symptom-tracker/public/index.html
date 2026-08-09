@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en" data-discreet="off">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#131210">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="A personal record of meals and gut symptoms.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Record">
+    <title>Record</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#view">Skip to content</a>
+
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="shell">
+      <header class="topbar" id="topbar">
+        <button class="icon-btn" id="settings-btn" aria-label="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="16" cy="7" r="2.4" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="17" r="2.4" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+        </button>
+        <div class="topbar-title">
+          <h1 id="view-title">Today</h1>
+          <p class="topbar-sub" id="view-sub"></p>
+        </div>
+        <div class="topbar-status">
+          <button class="status-pill" id="status-pill" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-text">Saved on device</span>
+          </button>
+        </div>
+      </header>
+
+      <main id="view" class="view" tabindex="-1">
+        <section class="boot-card">
+          <p class="boot-mark" aria-hidden="true"></p>
+          <p>Opening your record…</p>
+        </section>
+      </main>
+    </div>
+
+    <div class="action-rail" id="action-rail" hidden>
+      <button class="rail-quiet" id="act-symptom">
+        <span class="rail-quiet-label" data-lex="otherSymptom">Other symptom</span>
+      </button>
+      <div class="rail-primary">
+        <button class="big-action big-meal" id="act-meal">
+          <svg class="big-icon" viewBox="0 0 40 24" aria-hidden="true"><rect x="2" y="8" width="36" height="8" rx="4" fill="currentColor" opacity="0.9"/><rect x="2" y="8" width="36" height="8" rx="4" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+          <span class="big-label" data-lex="repeatMeal">Repeat meal</span>
+          <span class="big-sub" id="meal-hint">last: —</span>
+        </button>
+        <button class="big-action big-stool" id="act-stool">
+          <svg class="big-icon" viewBox="0 0 40 24" aria-hidden="true"><rect x="18" y="2" width="4" height="20" rx="2" fill="currentColor"/><rect x="8" y="10" width="4" height="12" rx="2" fill="currentColor" opacity="0.5"/><rect x="28" y="6" width="4" height="16" rx="2" fill="currentColor" opacity="0.5"/></svg>
+          <span class="big-label" data-lex="logStool">Bowel movement</span>
+          <span class="big-sub" id="stool-hint">saves on tap</span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Sections">
+      <button class="nav-item is-active" data-route="today" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>Today</span>
+      </button>
+      <button class="nav-item" data-route="explore">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20.5 20.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-item" data-route="timeline">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12M3 12h18M3 17h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="18.5" cy="7" r="1.9" fill="currentColor"/><circle cx="12.5" cy="17" r="1.9" fill="currentColor"/></svg>
+        <span>Timeline</span>
+      </button>
+      <button class="nav-item" data-route="evidence">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19v-6M16 19v-9M22 19H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/></svg>
+        <span>Evidence</span>
+      </button>
+    </nav>
+
+    <div class="sheet-root" id="sheet-root" hidden>
+      <div class="sheet-scrim" id="sheet-scrim"></div>
+      <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <header class="sheet-head">
+          <div class="sheet-grip" aria-hidden="true"></div>
+          <h2 id="sheet-title">Sheet</h2>
+          <button class="sheet-close" id="sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div class="sheet-body" id="sheet-body"></div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+      <span class="toast-text" id="toast-text"></span>
+      <button class="toast-action" id="toast-action" hidden>Undo</button>
+    </div>
+
+    <div class="veil" id="veil" hidden>
+      <div class="veil-inner">
+        <p class="veil-mark" aria-hidden="true"></p>
+        <p class="veil-text">Tap to continue</p>
+      </div>
+    </div>
+
+    <script src="js/util.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/sync.js"></script>
+    <script src="js/bristol.js"></script>
+    <script src="js/sheet.js"></script>
+    <script src="js/entry.js"></script>
+    <script src="js/view-today.js"></script>
+    <script src="js/view-explore.js"></script>
+    <script src="js/view-timeline.js"></script>
+    <script src="js/view-evidence.js"></script>
+    <script src="js/view-review.js"></script>
+    <script src="js/view-settings.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+[Unit]
+Description=Snapshot Symptom Tracker SQLite database
+
+[Service]
+Type=oneshot
+User=symptom-tracker
+Group=symptom-tracker
+ExecStart=/opt/symptom-tracker/current/deploy/backup.py

@@ -1,0 +1,5 @@
+# Insert inside the TLS-terminating rahulreddy.in site block.
+redir /tracker /tracker/
+handle_path /tracker/* {
+    reverse_proxy 127.0.0.1:8011
+}
