@@ -1,0 +1,10 @@
+[Unit]
+Description=Upload latest Symptom Tracker SQLite snapshot with restic
+After=network-online.target symptom-tracker-backup.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/symptom-tracker/current/deploy/restic-backup.sh
+Nice=10
