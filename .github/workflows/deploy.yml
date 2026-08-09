@@ -31,12 +31,18 @@ jobs:
 
             - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
 
+            # Pinned deliberately. The templates use Tera v2 syntax, which
+            # requires Zola >= 0.22. 'snap install zola --edge' served an
+            # older Tera v1 build and failed to parse them, so do not
+            # replace this with an unpinned install.
             - name: Install Zola
-              run: |
-                sudo snap install zola --edge
+              uses: taiki-e/install-action@v2
+              with:
+                tool: zola@0.23.2
 
             - name: Build Zola Application
               run: |
+                zola --version
                 zola --root blog build
                 echo "Files in build directory"
                 ls ${{ github.workspace }}/blog/public

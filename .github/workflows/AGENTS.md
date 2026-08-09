@@ -25,7 +25,7 @@ python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
 
 - `deploy.yml` runs on pushes to `main`, on pull requests targeting `main`, and on `workflow_dispatch`.
 - **Pull requests build and validate only.** The `Setup SSH` and `Deploy to Server` steps are gated with `if: github.event_name != 'pull_request'`, so a PR never touches the production VM. This matters because the deploy step runs `sudo rm -rf /var/www/html/*` and restarts the food-planner service.
-- On every trigger it installs Zola through Snap, builds with `zola --root blog build`, runs `zola --root blog check --skip-external-links`, and validates the food planner.
+- On every trigger it installs a pinned Zola via `taiki-e/install-action`, builds with `zola --root blog build`, runs `zola --root blog check --skip-external-links`, and validates the food planner.
 - External link checking is skipped in CI because third-party sites cause flaky failures. Run `zola --root blog check` locally to validate external links.
 - On pushes to `main` it additionally deploys both projects using `sshpass` and `scp`.
 - Generated `blog/public/` is deployed to `/var/www/html` and served at the domain root.
@@ -39,5 +39,5 @@ python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
 - Zola global flags precede the subcommand: use `zola --root blog build`, not `zola build --root blog`.
 - The intended Zola output path is `blog/public/`, not a root-level `public/` directory.
 - Any new step that touches the remote VM must carry `if: github.event_name != 'pull_request'`. Forked-PR runs also receive no secrets, so ungated deploy steps would fail even when they are not destructive.
-- `sudo snap install zola --edge` is unpinned. A future Zola release can break the build without any change to this repository; pin a version if deploys need to be reproducible.
+- Zola is pinned to `zola@0.23.2` via `taiki-e/install-action`. Do not replace this with `snap install zola --edge`: that channel served a pre-0.23 Tera v1 build which cannot parse these templates. If you bump the pin, re-verify the templates against `blog/templates/AGENTS.md`.
 
