@@ -30,6 +30,9 @@ python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
 - On pushes to `main` it additionally deploys both projects using `sshpass` and `scp`.
 - Generated `blog/public/` is deployed to `/var/www/html` and served at the domain root.
 - The food planner is installed at `/opt/food-planner/current` through `deploy/install.sh` and health-checked at `/api/bootstrap`.
+- The symptom tracker is installed at `/opt/symptom-tracker/current` through its own `deploy/install.sh` and health-checked on loopback at `http://127.0.0.1:8011/tracker/api/auth/session`, which is the only unauthenticated data-adjacent route. The public `https://…/tracker/` route is **not** checked, because the Caddy snippet is a one-time manual install and would fail the deploy before it exists.
+- The symptom tracker holds health data. Its `install.sh` takes a versioned pre-migration snapshot before restarting into new code and aborts the deploy if that snapshot fails. It never touches `/var/lib/symptom-tracker/`.
+- The restic off-VM backup units are installed but deliberately **not enabled** by `install.sh`. Enable `symptom-tracker-restic-backup.timer` by hand once `/etc/symptom-tracker-restic.env` exists, otherwise it would fail nightly.
 - `check-vm-prereqs.yml` runs for pull requests to `main`, syntax-checks, and remotely executes `food-planner/deploy/check-vm-prereqs.sh`.
 - Both workflows use `REMOTE_HOST`, `REMOTE_USER`, and `REMOTE_PASS` secrets.
 

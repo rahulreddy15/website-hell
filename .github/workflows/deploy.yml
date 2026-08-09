@@ -60,13 +60,15 @@ jobs:
                 bash -n food-planner/deploy/install.sh
                 bash -n food-planner/deploy/check-vm-prereqs.sh
 
-            # Validation only. The symptom tracker is not yet deployed to the VM;
-            # add a gated deploy step here once v1 is complete.
+            # Validation runs on every trigger, including pull requests. The VM deploy
+            # for this app lives in the gated 'Deploy to Server' step below.
             - name: Validate Symptom Tracker
               run: |
                 python3 -m py_compile symptom-tracker/app.py symptom-tracker/db.py symptom-tracker/smoke_test.py
                 python3 symptom-tracker/smoke_test.py
                 bash -n symptom-tracker/deploy/install.sh
+                bash -n symptom-tracker/deploy/restic-backup.sh
+                bash -n symptom-tracker/deploy/migrate-local-db.sh
 
             - name: Setup SSH
               if: github.event_name != 'pull_request'
@@ -117,6 +119,23 @@ jobs:
 
                 sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
                   "curl -fsS http://127.0.0.1:8010/api/bootstrap >/dev/null && curl -fsS https://rahulreddy.in/food-planner/api/bootstrap >/dev/null"
+
+                # Deploy Symptom Tracker. Health data: install.sh takes a versioned
+                # pre-migration snapshot before restarting, and never touches
+                # /var/lib/symptom-tracker. The public /tracker/ route requires the Caddy
+                # snippet to be installed once by hand, so only loopback is checked here.
+                echo "Deploying Symptom Tracker app..."
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "rm -rf /tmp/symptom_tracker_release && mkdir -p /tmp/symptom_tracker_release"
+
+                sshpass -p "$REMOTE_PASS" scp -r -o StrictHostKeyChecking=no \
+                  ${{ github.workspace }}/symptom-tracker/* "$REMOTE_USER@$REMOTE_HOST:/tmp/symptom_tracker_release/"
+
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "cd /tmp/symptom_tracker_release && sudo bash deploy/install.sh"
+
+                sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                  "curl -fsS http://127.0.0.1:8011/tracker/api/auth/session >/dev/null"
 
             - name: Job Status
               run: echo "🍏 This job's status is ${{ job.status }}."
