@@ -64,9 +64,10 @@ jobs:
             # for this app lives in the gated 'Deploy to Server' step below.
             - name: Validate Symptom Tracker
               run: |
-                python3 -m py_compile symptom-tracker/app.py symptom-tracker/db.py symptom-tracker/smoke_test.py
+                python3 -m py_compile symptom-tracker/app.py symptom-tracker/db.py symptom-tracker/smoke_test.py symptom-tracker/deploy/db-status.py symptom-tracker/deploy/backup.py
                 python3 symptom-tracker/smoke_test.py
                 bash -n symptom-tracker/deploy/install.sh
+                bash -n symptom-tracker/deploy/install-caddy-route.sh
                 bash -n symptom-tracker/deploy/restic-backup.sh
                 bash -n symptom-tracker/deploy/migrate-local-db.sh
 

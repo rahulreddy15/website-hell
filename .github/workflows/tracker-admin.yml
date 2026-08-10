@@ -1,0 +1,93 @@
+name: Tracker Admin
+run-name: "Tracker admin: ${{ inputs.action }}"
+
+# Manual maintenance for the symptom tracker on the VM, so routine admin does not
+# require an SSH client or knowing the server credentials. Never runs automatically.
+on:
+    workflow_dispatch:
+        inputs:
+            action:
+                description: What to do on the VM
+                required: true
+                type: choice
+                default: status
+                options:
+                    - status
+                    - set-password
+                    - list-backups
+                    - restart
+
+permissions:
+    contents: read
+
+concurrency:
+    group: tracker-admin
+    cancel-in-progress: false
+
+jobs:
+    admin:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository code
+              uses: actions/checkout@v4
+
+            - name: Install sshpass
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y sshpass
+
+            - name: Trust remote host
+              run: |
+                mkdir -p ~/.ssh
+                chmod 700 ~/.ssh
+                ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+            - name: Run action
+              env:
+                REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+                REMOTE_USER: ${{ secrets.REMOTE_USER }}
+                REMOTE_PASS: ${{ secrets.REMOTE_PASS }}
+                NEW_PASSWORD: ${{ secrets.SYMPTOM_TRACKER_PASSWORD }}
+                ACTION: ${{ inputs.action }}
+              run: |
+                set -euo pipefail
+                remote() {
+                  sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" "$@"
+                }
+
+                case "$ACTION" in
+                  status)
+                    remote "systemctl is-active symptom-tracker.service || true"
+                    remote "systemctl is-enabled symptom-tracker-backup.timer || true"
+                    remote "systemctl is-enabled symptom-tracker-restic-backup.timer 2>/dev/null || echo 'restic timer disabled (expected until /etc/symptom-tracker-restic.env exists)'"
+                    remote "curl -fsS http://127.0.0.1:8011/tracker/api/auth/session"
+                    echo
+                    remote "cd /opt/symptom-tracker/current && sudo -u symptom-tracker SYMPTOM_TRACKER_DB=/var/lib/symptom-tracker/symptom_tracker.sqlite3 python3 deploy/db-status.py"
+                    ;;
+
+                  set-password)
+                    # The password arrives as a secret and is piped over stdin, so it never
+                    # appears in the workflow log, in argv, or in the VM's process list.
+                    if [ -z "${NEW_PASSWORD:-}" ]; then
+                      echo "::error::Repository secret SYMPTOM_TRACKER_PASSWORD is not set. Add it under Settings > Secrets and variables > Actions, then run this workflow again."
+                      exit 1
+                    fi
+                    printf '%s\n' "$NEW_PASSWORD" | sshpass -p "$REMOTE_PASS" ssh -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_HOST" \
+                      "cd /opt/symptom-tracker/current && sudo -u symptom-tracker SYMPTOM_TRACKER_DB=/var/lib/symptom-tracker/symptom_tracker.sqlite3 python3 app.py --set-password"
+                    remote "curl -fsS http://127.0.0.1:8011/tracker/api/auth/session"
+                    echo
+                    echo "Password updated. Existing sessions were invalidated, so sign in again."
+                    ;;
+
+                  list-backups)
+                    remote "sudo ls -lh /var/lib/symptom-tracker/backups/ 2>/dev/null || echo 'no nightly backups yet'"
+                    remote "sudo ls -lh /var/lib/symptom-tracker/backups/pre-migration/ 2>/dev/null || echo 'no pre-migration snapshots yet'"
+                    ;;
+
+                  restart)
+                    remote "sudo systemctl restart symptom-tracker.service"
+                    sleep 3
+                    remote "curl -fsS http://127.0.0.1:8011/tracker/api/auth/session"
+                    echo
+                    ;;
+                esac

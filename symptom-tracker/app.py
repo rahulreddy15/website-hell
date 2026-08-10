@@ -8,6 +8,7 @@ import json
 import mimetypes
 import os
 import sqlite3
+import sys
 import traceback
 import uuid
 from http import cookies
@@ -194,8 +195,16 @@ def main() -> None:
     parser=argparse.ArgumentParser(); parser.add_argument("--set-password",action="store_true"); args=parser.parse_args(); store.ensure_schema()
     if args.set_password:
         import getpass
-        with store.connect() as conn: store.set_password(conn,getpass.getpass("New password: "))
-        print("Password set"); return
+        # Must work without a TTY: this is run over ssh from the admin workflow, where
+        # getpass would fail outright. Prefer stdin when it is piped, so the secret is
+        # never visible in the remote process list the way an argv or env value can be.
+        if not sys.stdin.isatty():
+            new_password=sys.stdin.readline().rstrip("\n")
+        else:
+            new_password=getpass.getpass("New password: ")
+        if not new_password: raise SystemExit("Password cannot be empty")
+        with store.connect() as conn: store.set_password(conn,new_password)
+        print("Password set; all existing sessions were invalidated"); return
     password=os.environ.get("SYMPTOM_TRACKER_PASSWORD")
     with store.connect() as conn:
         if password and not conn.execute("SELECT 1 FROM auth_config").fetchone(): store.set_password(conn,password)
