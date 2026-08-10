@@ -75,6 +75,16 @@ snapshot in `backups/pre-migration/`, with the current schema version in its nam
 aborts if that snapshot fails. The ten newest pre-migration snapshots are retained separately
 and are never included in the nightly 30-snapshot rotation.
 
+After the service passes its loopback health check, deployment automatically installs the
+contents of `deploy/caddy-symptom-tracker.caddy` inside the `rahulreddy.in` TLS site block,
+validates the complete Caddyfile, and reloads Caddy. The uniquely marked
+`# BEGIN symptom-tracker` / `# END symptom-tracker` block is replaced in place on later
+deploys. The pre-edit Caddyfile is retained as
+`/etc/caddy/Caddyfile.symptom-tracker.bak.TIMESTAMP`; validation failure restores it and
+aborts. Set `CADDYFILE=/alternate/path` when deploying against a nonstandard location. If
+Caddy or its configuration file is absent, deployment warns and leaves the healthy loopback
+service running rather than failing the application install.
+
 The local snapshot timer runs `VACUUM INTO` at 03:15. The off-VM timer starts at 04:00,
 orders itself after the snapshot service, and uploads only the newest standalone snapshot—not
 the live WAL database. It refuses to upload if no snapshot newer than 24 hours exists.

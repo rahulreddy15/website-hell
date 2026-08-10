@@ -6,6 +6,7 @@ CURRENT="$ROOT/current"
 DATA=/var/lib/symptom-tracker
 DB="$DATA/symptom_tracker.sqlite3"
 PRE_MIGRATION="$DATA/backups/pre-migration"
+CADDYFILE="${CADDYFILE:-/etc/caddy/Caddyfile}"
 [[ "$EUID" -eq 0 ]] || { echo "Run as root" >&2; exit 1; }
 [[ -f app.py && -f schema.sql && -d public ]] || { echo "Run from the symptom-tracker release directory" >&2; exit 1; }
 command -v python3 >/dev/null && command -v rsync >/dev/null && command -v runuser >/dev/null || { echo "python3, rsync, and runuser are required" >&2; exit 1; }
@@ -75,7 +76,7 @@ chown -R root:root "$ROOT"; chown -R "$APP:$APP" "$DATA"; chmod 750 "$DATA" "$DA
 install -m 0644 deploy/symptom-tracker.service /etc/systemd/system/
 install -m 0644 deploy/symptom-tracker-backup.service deploy/symptom-tracker-backup.timer /etc/systemd/system/
 install -m 0644 deploy/symptom-tracker-restic-backup.service deploy/symptom-tracker-restic-backup.timer /etc/systemd/system/
-chmod 0755 "$CURRENT/deploy/backup.py" "$CURRENT/deploy/restic-backup.sh" "$CURRENT/deploy/migrate-local-db.sh"
+chmod 0755 "$CURRENT/deploy/backup.py" "$CURRENT/deploy/restic-backup.sh" "$CURRENT/deploy/migrate-local-db.sh" "$CURRENT/deploy/install-caddy-route.sh"
 systemctl daemon-reload
 systemctl enable symptom-tracker.service symptom-tracker-backup.timer
 systemctl restart symptom-tracker.service
@@ -85,7 +86,14 @@ for attempt in $(seq 1 30); do
   sleep 1
 done
 curl -fsS "http://127.0.0.1:8011/api/auth/session" >/dev/null || { systemctl status symptom-tracker.service --no-pager; exit 1; }
-echo "Install deploy/caddy-symptom-tracker.caddy inside the TLS site block, then reload Caddy."
+
+install_caddy_route() {
+  CADDYFILE="$CADDYFILE" bash deploy/install-caddy-route.sh deploy/caddy-symptom-tracker.caddy
+}
+
+# Only expose the route after the application has passed its loopback health check.
+install_caddy_route
+echo "Symptom Tracker deployed at /tracker/."
 echo "Data remains in $DATA across rsync deployments."
 if [[ "$GENERATED_PASSWORD" -eq 1 ]]; then
   echo
