@@ -9,8 +9,20 @@ PRE_MIGRATION="$DATA/backups/pre-migration"
 [[ "$EUID" -eq 0 ]] || { echo "Run as root" >&2; exit 1; }
 [[ -f app.py && -f schema.sql && -d public ]] || { echo "Run from the symptom-tracker release directory" >&2; exit 1; }
 command -v python3 >/dev/null && command -v rsync >/dev/null && command -v runuser >/dev/null || { echo "python3, rsync, and runuser are required" >&2; exit 1; }
+GENERATED_PASSWORD=0
 if [[ ! -f /etc/symptom-tracker.env ]]; then
-  read -rsp "Initial Symptom Tracker password: " INITIAL_PASSWORD; echo
+  # CI runs this over ssh with no TTY. An unguarded `read` hits EOF and, under set -e,
+  # kills the deploy with no output at all. Prefer an explicit variable, fall back to an
+  # interactive prompt only when there really is a terminal, and otherwise generate a
+  # strong random password. Never ship a default or known password: this holds health data.
+  if [[ -n "${SYMPTOM_TRACKER_INITIAL_PASSWORD:-}" ]]; then
+    INITIAL_PASSWORD="$SYMPTOM_TRACKER_INITIAL_PASSWORD"
+  elif [[ -t 0 ]]; then
+    read -rsp "Initial Symptom Tracker password: " INITIAL_PASSWORD; echo
+  else
+    INITIAL_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(18))')"
+    GENERATED_PASSWORD=1
+  fi
   [[ -n "$INITIAL_PASSWORD" ]] || { echo "Password cannot be empty" >&2; exit 1; }
   printf 'SYMPTOM_TRACKER_PASSWORD=%q\n' "$INITIAL_PASSWORD" > /etc/symptom-tracker.env
   chmod 0600 /etc/symptom-tracker.env
@@ -75,3 +87,11 @@ done
 curl -fsS "http://127.0.0.1:8011/api/auth/session" >/dev/null || { systemctl status symptom-tracker.service --no-pager; exit 1; }
 echo "Install deploy/caddy-symptom-tracker.caddy inside the TLS site block, then reload Caddy."
 echo "Data remains in $DATA across rsync deployments."
+if [[ "$GENERATED_PASSWORD" -eq 1 ]]; then
+  echo
+  echo "No password existed, so one was generated. Retrieve it on the VM with:"
+  echo "  sudo cat /etc/symptom-tracker.env"
+  echo "Then change it with:"
+  echo "  cd $CURRENT && sudo -u $APP SYMPTOM_TRACKER_DB=$DB python3 app.py --set-password"
+  echo "It is deliberately not printed here: CI logs are not a place for credentials."
+fi
