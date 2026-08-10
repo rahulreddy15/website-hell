@@ -8,7 +8,7 @@
      page, not here, so nothing is lost when a request fails.
 */
 
-var VERSION = "record-v2";
+var VERSION = "record-v3";
 var SHELL = VERSION + "-shell";
 
 var SCOPE = new URL("./", self.registration ? self.registration.scope : self.location.href);

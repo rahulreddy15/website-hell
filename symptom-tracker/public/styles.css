@@ -488,21 +488,54 @@ body[data-rail="on"] .shell {
 
 /* ------------------------------------------------------- bristol picker */
 
+/* No scroll snapping.
+
+   This strip previously used `scroll-snap-type: x proximity` with
+   `scroll-snap-align: center` on each card. With seven 118px cards and no
+   runway past the ends, the centre snap positions for types 1 and 7 fall
+   outside [0, maxScroll] — they have no valid resting position at all.
+   Engines disagree about what to do with an unsatisfiable snap target:
+   Chrome clamps to the scroll boundary, WebKit re-settles on the nearest
+   *achievable* target, which drags the user back off the ends. The result
+   on iOS was that types 1 and 7 could not be selected — and type 7 is
+   watery stool, half of the `bristol67` outcome the whole study counts.
+
+   Snapping bought nothing here. This is a row of tap targets, not a
+   paged carousel: nothing needs to come to rest centred, it only needs to
+   be visible and tappable. Free scrolling cannot fail this way. */
 .bristol-strip {
   display: flex; gap: 9px;
   overflow-x: auto;
   padding: 4px 14px 14px;
   margin: 0 -14px;
-  scroll-snap-type: x proximity;
+  scroll-padding-inline: 14px;
+  overscroll-behavior-x: contain;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
 .bristol-strip::-webkit-scrollbar { display: none; }
+
+/* Fade only the edge that actually continues, so the fade is a truthful
+   statement about where there is more to see rather than decoration. */
+.bristol-strip[data-overflow="both"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%);
+}
+.bristol-strip[data-overflow="end"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent 100%);
+}
+.bristol-strip[data-overflow="start"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px);
+  mask-image: linear-gradient(to right, transparent 0, #000 30px);
+}
+/* Safe only in this state: by definition there is nothing to scroll, so
+   centring cannot make the leading cards unreachable. */
+.bristol-strip[data-overflow="none"] { justify-content: center; }
 
 .b-card {
   --sil-bg: var(--surface);
   flex: none;
   width: 118px; min-height: 158px;
-  scroll-snap-align: center;
   display: flex; flex-direction: column; align-items: flex-start;
   gap: 4px; padding: 11px 11px 12px;
   border-radius: var(--r-md);
@@ -821,21 +854,33 @@ html[data-discreet="on"] .b-card[aria-checked="true"]::after { content: "·"; fo
   border-left: 1px solid var(--ochre-dim);
   pointer-events: none;
 }
-.tl-band {
-  position: absolute; top: 26px; height: 22px;
-  min-width: 8px;
-  border-radius: 5px;
-  background: linear-gradient(180deg, rgba(201,160,94,0.5), rgba(201,160,94,0.24));
-  border: 1px solid var(--ochre-dim);
-  color: var(--ink);
-  font-size: 10.5px; line-height: 20px; padding: 0 6px;
-  overflow: visible; white-space: nowrap;
-  text-align: left;
-  text-shadow: 0 0 6px var(--surface), 0 0 3px var(--surface);
+/* Three event types, three shapes, three colours, three rows — so none of
+   them depends on colour alone to be told apart:
+     meal        filled circle, ochre, stem hanging down
+     bowel       numbered rounded square, Bristol colour, stem below
+     non-bowel   outlined diamond, mauve, dotted stem            */
+.tl-meal {
+  position: absolute; top: 6px; bottom: 6px;
+  width: 22px; margin-left: -11px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  color: var(--ochre); background: none;
 }
-/* The drawn band stays the width of the meal; the hit area does not.
-   A 22px-tall target is not usable on a phone. */
-.tl-band::before { content: ""; position: absolute; inset: -12px -8px; }
+.tl-meal::before { content: ""; position: absolute; inset: -6px -12px; }
+.tl-meal-dot {
+  flex: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ochre);
+  /* a ring in the row colour keeps two close meals individually legible */
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.tl-meal .tl-stem {
+  width: 2px; flex: 1; min-height: 8px;
+  background: currentColor; opacity: 0.5; border-radius: 1px;
+}
+.tl-meal.is-selected .tl-meal-dot {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink);
+}
+.tl-meal.is-selected .tl-stem { opacity: 1; }
 
 .tl-mark {
   position: absolute; bottom: 6px;
@@ -859,7 +904,9 @@ html[data-discreet="on"] .b-card[aria-checked="true"]::after { content: "·"; fo
   border-left: 2px dotted var(--mauve);
   color: var(--mauve); background: none;
 }
-.tl-other::before { content: ""; position: absolute; inset: -6px -12px; }
+/* The drawn height encodes severity, so it varies and is often short.
+   The hit area must not vary with it. */
+.tl-other::before { content: ""; position: absolute; top: -14px; bottom: -14px; left: -12px; right: -12px; }
 .tl-other-dot {
   width: 20px; height: 20px; border-radius: 6px;
   display: grid; place-items: center; font-size: 11px;
@@ -876,6 +923,16 @@ html[data-discreet="on"] .b-card[aria-checked="true"]::after { content: "·"; fo
   font-family: var(--font-mono); font-size: 10px; color: var(--faint); letter-spacing: 0.04em;
 }
 .tl-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+/* Legend swatches carry the marker's shape, not just its colour. */
+.tl-legend i.lg-meal { background: var(--ochre); border-radius: 50%; }
+.tl-legend i.lg-bm { background: none; border: 1px solid var(--teal); border-radius: 3px; }
+.tl-legend i.lg-other {
+  background: var(--mauve-wash); border: 1px solid var(--mauve);
+  border-radius: 2px; transform: rotate(45deg) scale(0.86);
+}
+.tl-legend i.lg-sev { background: var(--mauve); border-radius: 1px; }
+.tl-legend i.lg-lag { background: var(--ochre-wash); border: 1px solid var(--ochre-dim); }
+.tl-legend i.lg-censor { background: var(--muted); }
 
 /* -------------------------------------------------------------- evidence */
 

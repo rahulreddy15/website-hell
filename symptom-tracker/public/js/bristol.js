@@ -109,12 +109,30 @@
 
     function cards() { return Array.prototype.slice.call(group.querySelectorAll(".b-card")); }
 
+    /* Marks which edges actually continue, so the CSS can fade only those.
+       Also the only thing standing between the user and "I did not know it
+       scrolled", which is how types 1 and 7 stayed unreachable. */
+    function updateOverflow() {
+      var max = group.scrollWidth - group.clientWidth;
+      if (max <= 1) { group.dataset.overflow = "none"; return; }
+      var atStart = group.scrollLeft <= 1;
+      var atEnd = group.scrollLeft >= max - 1;
+      group.dataset.overflow = atStart ? "end" : atEnd ? "start" : "both";
+    }
+    group.addEventListener("scroll", updateOverflow, { passive: true });
+    if (window.ResizeObserver) {
+      /* Observed rather than a window listener so it is collected with the
+         sheet instead of outliving it. */
+      new ResizeObserver(updateOverflow).observe(group);
+    }
+
     function setFocus(index) {
       var list = cards();
       var i = Math.max(0, Math.min(list.length - 1, index));
       list.forEach(function (c, j) { c.tabIndex = j === i ? 0 : -1; });
       list[i].focus();
       list[i].scrollIntoView({ block: "nearest", inline: "center", behavior: "auto" });
+      updateOverflow();
     }
 
     function select(n, source) {
@@ -157,26 +175,50 @@
       var target = opts.selected ? opts.selected : 4;
       var card = group.querySelector('[data-bristol="' + target + '"]');
       if (card) card.scrollIntoView({ block: "nearest", inline: "center" });
+      updateOverflow();
     });
 
     return wrap;
   }
 
-  /* ------------------------------------------------- reference grid view */
+  /* ------------------------------------------------- reference grid view
+     Doubles as a scroll-free way to reach every type. The strip is still
+     the fast path, but the control that records the study's primary
+     outcome should not have exactly one route to it. */
 
-  function referenceGrid() {
-    var wrap = U.el('<div class="b-grid" role="list"></div>');
+  function referenceGrid(options) {
+    var opts = options || {};
+    var wrap = U.el(
+      '<div class="b-grid" role="' + (opts.onSelect ? "radiogroup" : "list") + '"' +
+      (opts.onSelect ? ' aria-label="' + U.esc(U.lex("bristol")) + '"' : "") +
+      "></div>"
+    );
     wrap.innerHTML = TYPES.map(function (t) {
+      var sel = opts.selected === t.n;
       return (
-        '<div class="b-card" role="listitem" style="--b-color:' + color(t.n) + '">' +
+        (opts.onSelect
+          ? '<button type="button" class="b-card" role="radio" aria-checked="' +
+            (sel ? "true" : "false") + '" data-bristol="' + t.n +
+            '" aria-label="Type ' + t.n + ", " + U.esc(t.short) + '"'
+          : '<div class="b-card" role="listitem"') +
+        ' style="--b-color:' + color(t.n) + '">' +
         '<span class="b-kicker" aria-hidden="true">type</span>' +
         '<span class="b-num" aria-hidden="true">' + t.n + "</span>" +
         '<span class="b-sil">' + silSvg(t) + "</span>" +
         '<span class="b-label">' + U.esc(t.short) + "</span>" +
         '<span class="b-ref-desc">' + U.esc(t.full) + "</span>" +
-        "</div>"
+        (opts.onSelect ? "</button>" : "</div>")
       );
     }).join("");
+
+    if (opts.onSelect) {
+      wrap.addEventListener("click", function (event) {
+        var card = event.target.closest(".b-card");
+        if (!card) return;
+        U.haptic(18);
+        opts.onSelect(Number(card.dataset.bristol), "grid");
+      });
+    }
     return wrap;
   }
 

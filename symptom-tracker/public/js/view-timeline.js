@@ -1,8 +1,15 @@
 /* view-timeline.js — one shared time axis.
 
-   Meals are horizontal exposure bands, bowel records are vertical markers
-   labelled with their Bristol number, and reported severity gets its own
-   row. Nothing is stacked into a single overloaded chart.
+   Meals are instant markers, bowel records are vertical markers labelled
+   with their Bristol number, and reported severity gets its own row.
+   Nothing is stacked into a single overloaded chart.
+
+   Meals are drawn as instants, not bands, because consumption_event has a
+   timestamp and no duration. The old band width was chosen to fit a text
+   label, which meant it asserted an eating window that was never observed.
+   Names are not drawn on the axis at all: long titles collided, and the
+   point of the view is the timing of intake against symptoms. Tap a marker
+   to read the record.
 
    The lag window is the whole point of the view: pick 0–6h, 6–24h or
    24–48h and the shading shows exactly which later events fall inside the
@@ -153,21 +160,27 @@
       ));
     });
 
-    /* row: meals */
+    /* row: meals.
+       Drawn as a point, not a labelled band. Two reasons: long dish names
+       collided and were unreadable, and — more importantly — the band's
+       width was only ever chosen to fit its text. A consumption_event has
+       a timestamp and no duration, so a band asserts an eating window that
+       was never observed. The name lives in the accessible label and in
+       the detail you get by tapping. */
     var rowMeals = U.el('<div class="tl-row"><span class="tl-rowlabel">meals</span></div>');
     meals.forEach(function (m) {
       var x = xFor(m.ts_utc, startMs);
       var title = ST.entry.mealTitle(m, ST.state.items);
-      var band = U.el(
-        '<button type="button" class="tl-band" style="left:' + x + "px;width:" +
-        Math.max(46, PX_PER_HOUR * 0.6) + 'px" aria-label="' +
-        U.esc(U.fmtClock(m.ts_utc) + " " + title) + '">' + U.esc(title) + "</button>"
+      var mark = U.el(
+        '<button type="button" class="tl-meal" style="left:' + x + 'px" aria-label="' +
+        U.esc(U.fmtClock(m.ts_utc) + ", meal, " + title) + '">' +
+        '<span class="tl-meal-dot"></span><span class="tl-stem"></span></button>'
       );
-      if (selected && selected.id === m.id) band.style.outline = "2px solid var(--ochre)";
-      band.addEventListener("click", function () {
+      if (selected && selected.id === m.id) mark.classList.add("is-selected");
+      mark.addEventListener("click", function () {
         toggleSelect({ type: "meal", id: m.id, data: m });
       });
-      rowMeals.appendChild(band);
+      rowMeals.appendChild(mark);
     });
     inner.appendChild(rowMeals);
 
@@ -236,15 +249,13 @@
 
     container.appendChild(U.el(
       '<div class="tl-legend">' +
-      '<span><i style="background:var(--ochre-dim)"></i>meal</span>' +
-      '<span><i style="background:var(--teal-dim)"></i>' + U.esc(U.lex("stoolShort").toLowerCase()) +
+      '<span><i class="lg-meal"></i>meal</span>' +
+      '<span><i class="lg-bm"></i>' + U.esc(U.lex("stoolShort").toLowerCase()) +
       ", numbered by type</span>" +
-      '<span><i style="background:var(--mauve)"></i>reported severity</span>' +
-      '<span><i style="background:var(--mauve-wash);border:1px solid var(--mauve)"></i>' +
-      "symptom, no bowel movement</span>" +
-      (lag.to ? '<span><i style="background:var(--ochre-wash);border:1px solid var(--ochre-dim)"></i>' +
-        U.esc(lag.label) + " after a meal</span>" : "") +
-      '<span><i style="background:var(--muted)"></i>excluded window</span>' +
+      '<span><i class="lg-other"></i>symptom, no bowel movement</span>' +
+      '<span><i class="lg-sev"></i>reported severity</span>' +
+      (lag.to ? '<span><i class="lg-lag"></i>' + U.esc(lag.label) + " after a meal</span>" : "") +
+      '<span><i class="lg-censor"></i>excluded window</span>' +
       "</div>"
     ));
 
@@ -268,8 +279,9 @@
       }
     } else {
       detailHost.appendChild(U.el(
-        '<p class="mono faint" style="font-size:11px;padding:6px 2px">' +
-        "Tap a band or marker to isolate its window and read the raw record.</p>"
+        '<p class="mono faint" style="font-size:11px;padding:6px 2px;line-height:1.55">' +
+        "Names are not drawn on the axis — tap any marker to read the record and isolate " +
+        "its window.</p>"
       ));
     }
 

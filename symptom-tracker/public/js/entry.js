@@ -191,8 +191,14 @@
 
         var extra = U.el('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div>');
 
-        var ref = U.el('<button type="button" class="btn ghost">What the types mean</button>');
-        ref.addEventListener("click", openReference);
+        var ref = U.el('<button type="button" class="btn ghost">See all seven</button>');
+        ref.addEventListener("click", function () {
+          /* Also a selectable path, so every type stays reachable without
+             scrolling anything. */
+          openReference({
+            onSelect: function (n) { commitStool(n, opts); },
+          });
+        });
         extra.appendChild(ref);
 
         var back = U.el('<button type="button" class="btn ghost">Log an earlier one</button>');
@@ -371,15 +377,26 @@
     });
   }
 
-  function openReference() {
+  function openReference(options) {
+    var opts = options || {};
     ST.sheet.open({
-      title: "Type reference",
-      render: function (body) {
+      title: opts.onSelect ? "All seven types" : "Type reference",
+      autofocus: false,
+      render: function (body, ctx) {
         body.appendChild(U.el(
-          '<p class="sheet-note">The standard seven-point scale. This full view is here to ' +
-          "read at leisure — the strip on the entry screen is the one to use in a hurry.</p>"
+          '<p class="sheet-note">' +
+          (opts.onSelect
+            ? "The standard seven-point scale, all seven listed with what each one means. " +
+              "Tap one here to log it."
+            : "The standard seven-point scale. This full view is here to read at leisure — " +
+              "the strip on the entry screen is the one to use in a hurry.") +
+          "</p>"
         ));
-        body.appendChild(ST.bristol.referenceGrid());
+        body.appendChild(ST.bristol.referenceGrid(
+          opts.onSelect
+            ? { onSelect: function (n) { ctx.close(true); opts.onSelect(n); } }
+            : {}
+        ));
       },
     });
   }

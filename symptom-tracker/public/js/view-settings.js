@@ -171,7 +171,7 @@
         body.appendChild(U.el('<div class="section-head"><h2>Reference</h2></div>'));
         var ref = U.el('<button type="button" class="btn wide ghost">' +
           U.esc(U.lex("bristol")) + " reference</button>");
-        ref.addEventListener("click", ST.entry.openReference);
+        ref.addEventListener("click", function () { ST.entry.openReference(); });
         body.appendChild(ref);
 
         body.appendChild(U.el(
