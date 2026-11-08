@@ -7,7 +7,8 @@ These workflows validate pull requests and deploy both independent projects to a
 ```text
 .github/workflows/
 ├── check-vm-prereqs.yml      # PR validation and remote prerequisite check
-└── deploy.yml                # Main-branch build and deployment
+├── deploy.yml                # Main-branch build and deployment
+└── dns-update.yml            # Manual: point the Cloudflare A record at a new VM IP
 ```
 
 ## Commands
@@ -35,6 +36,8 @@ python3 -m py_compile food-planner/app.py food-planner/smoke_test.py
 - The restic off-VM backup units are installed but deliberately **not enabled** by `install.sh`. Enable `symptom-tracker-restic-backup.timer` by hand once `/etc/symptom-tracker-restic.env` exists, otherwise it would fail nightly.
 - `check-vm-prereqs.yml` runs for pull requests to `main`, syntax-checks, and remotely executes `food-planner/deploy/check-vm-prereqs.sh`.
 - Both workflows use `REMOTE_HOST`, `REMOTE_USER`, and `REMOTE_PASS` secrets.
+- `dns-update.yml` is `workflow_dispatch` only and never touches the VM. It PATCHes the existing Cloudflare A record(s) for `rahulreddy.in` to the given IPv4, preserving TTL and proxy status, and refuses to create records or edit ambiguous ones. It uses `CLOUDFLARE_API_KEY`; if `CLOUDFLARE_EMAIL` is also set the key is treated as the Global API Key, otherwise as a scoped API token. DNS is grey-cloud (DNS only) so SSH to the domain works; keep it that way.
+- The VM is an EC2 instance without an Elastic IP, so a stop/start changes its public IPv4 (IPv6 is stable). Symptom: `ssh-keyscan` in `Setup SSH` exits 1 after ~5s with no output. Fix: run `dns-update.yml` with the new IP, then set `REMOTE_HOST` to it (`printf '%s' <ip> | gh secret set REMOTE_HOST`).
 
 ## Conventions and Gotchas
 
